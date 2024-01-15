@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "syscall.h"
 
 struct cpu cpus[NCPU];
 
@@ -25,6 +26,16 @@ extern char trampoline[]; // trampoline.S
 // memory model when using p->parent.
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
+
+//#########################################################
+//#########################################################
+
+// int setpriority(int num);
+// int getpinfo(struct pstat *);
+
+//#########################################################
+//#########################################################
+
 
 // Allocate a page for each process's kernel stack.
 // Map it high in memory, followed by an invalid
@@ -124,7 +135,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-
+  p->priority = 10;  // Set to the default priority
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -148,6 +159,56 @@ found:
 
   return p;
 }
+
+//#########################################################
+//#########################################################
+int
+setpriority(int num)
+{
+  struct proc *p = myproc();
+
+  if (num < 1 || num > 20)
+    return -1;  // Invalid priority value
+
+  acquire(&p->lock);
+  p->priority = num;
+  release(&p->lock);
+
+  return 0;  // Success
+}
+
+int
+getpinfo(struct pstat *pstat)
+{
+  struct proc *p;
+  int i = 0;
+
+  acquire(&wait_lock);
+
+  for (p = proc; p < &proc[NPROC]; p++) {
+    if (p->state != UNUSED) {
+      pstat->inuse[i] = 1;
+      pstat->pid[i] = p->pid;
+      pstat->ppid[i] = (p->parent) ? p->parent->pid : 0;
+      safestrcpy(pstat->name[i], p->name, sizeof(pstat->name[i]));
+      pstat->priority[i] = p->priority;
+      pstat->status[i] = p->state;
+      pstat->size[i] = p->sz;
+
+      // Add other information you want to include
+
+      i++;
+    }
+  }
+
+  release(&wait_lock);
+
+  return 0;  // Success
+}
+
+//#########################################################
+//#########################################################
+
 
 // free a proc structure and the data hanging from it,
 // including user pages.
@@ -441,23 +502,51 @@ wait(uint64 addr)
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
+// void
+// scheduler(void)
+// {
+//   struct proc *p;
+//   struct cpu *c = mycpu();
+  
+//   c->proc = 0;
+//   for(;;){
+//     // Avoid deadlock by ensuring that devices can interrupt.
+//     intr_on();
+
+//     for(p = proc; p < &proc[NPROC]; p++) {
+//       acquire(&p->lock);
+//       if(p->state == RUNNABLE) {
+//         // Switch to chosen process.  It is the process's job
+//         // to release its lock and then reacquire it
+//         // before jumping back to us.
+//         p->state = RUNNING;
+//         c->proc = p;
+//         swtch(&c->context, &p->context);
+
+//         // Process is done running for now.
+//         // It should have changed its p->state before coming back.
+//         c->proc = 0;
+//       }
+//       release(&p->lock);
+//     }
+//   }
+// }
+
 void
 scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  
+  struct proc *lastproc = 0;  // Add this line to store the last process.
+
   c->proc = 0;
-  for(;;){
-    // Avoid deadlock by ensuring that devices can interrupt.
-    intr_on();
+  for(;;) {
+    intr_on();  // Avoid deadlock by ensuring that devices can interrupt.
 
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
+      if(p->state == RUNNABLE && (lastproc == 0 || p->priority > lastproc->priority)) {
+        // Switch to the process with the highest priority.
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
@@ -465,11 +554,13 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+        lastproc = p;  // Save the last process.
       }
       release(&p->lock);
     }
   }
 }
+
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores

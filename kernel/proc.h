@@ -1,3 +1,16 @@
+// kernel/proc.h
+struct pstat {
+  int inuse[NPROC];       // 1 if the process is in use; 0 otherwise
+  int pid[NPROC];         // Process ID
+  int ppid[NPROC];        // Parent Process ID
+  char name[NPROC][16];   // Process name (assuming a maximum of 16 characters)
+  int priority[NPROC];    // Process priority
+  int status[NPROC];      // Process status
+  int size[NPROC];        // Process size (or any other relevant size metric)
+  // Add more fields as needed
+};
+
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
@@ -104,4 +117,6 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  int priority;  
 };

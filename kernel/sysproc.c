@@ -5,6 +5,8 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "syscall.h"
+//#include "user.h"
 
 uint64
 sys_exit(void)
@@ -88,4 +90,44 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// In sysproc.c or another related file
+// int argint(int n, int *ip) {
+//   struct proc *p = myproc();
+
+//     if (n >= 0 && n < 6) {
+//         *ip = p->trapframe->a0 + n;
+//         return 0;
+//     }
+
+//     return -1;  // Invalid argument index
+// }
+
+
+int sys_setpriority(void) {
+    int num;
+
+    if (argint(0, &num) < 0) {
+        return -1;
+    }
+
+    if (num < 1 || num > 20) {
+        return -1;  // Invalid priority value
+    }
+
+    myproc()->priority = num;
+    return 0;
+}
+
+int sys_getpinfo(void) {
+    struct pstat *pstat;
+
+    if (argstr(0, (void *)&pstat, sizeof(struct pstat)) < 0) {
+        return -1;
+    }
+
+    // Your implementation to fill the pstat structure with process information
+
+    return 0;
 }

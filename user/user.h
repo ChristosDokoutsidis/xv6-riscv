@@ -1,5 +1,5 @@
 struct stat;
-
+struct pstat;
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
@@ -22,6 +22,15 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+
+
+// user.h
+#define SYS_setpriority  22  // Adjust the syscall number accordingly
+int setpriority(int num);
+// user.h
+#define SYS_getpinfo  23  // Adjust the syscall number accordingly
+int getpinfo(struct pstat *);
+
 
 // ulib.c
 int stat(const char*, struct stat*);
