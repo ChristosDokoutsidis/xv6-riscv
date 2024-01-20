@@ -7,7 +7,7 @@ struct pstat {
   int priority[NPROC];    // Process priority
   int status[NPROC];      // Process status
   int size[NPROC];        // Process size (or any other relevant size metric)
-  // Add more fields as needed
+  
 };
 
 

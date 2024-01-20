@@ -25,10 +25,10 @@ int uptime(void);
 
 
 // user.h
-#define SYS_setpriority  22  // Adjust the syscall number accordingly
+#define SYS_setpriority  22  
 int setpriority(int num);
 // user.h
-#define SYS_getpinfo  23  // Adjust the syscall number accordingly
+#define SYS_getpinfo  23  
 int getpinfo(struct pstat *);
 
 

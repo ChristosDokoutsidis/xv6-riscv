@@ -127,7 +127,7 @@ int sys_getpinfo(void) {
         return -1;
     }
 
-    // Your implementation to fill the pstat structure with process information
+    
 
     return 0;
 }

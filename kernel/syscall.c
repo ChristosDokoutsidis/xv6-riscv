@@ -105,8 +105,8 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 
 // Prototypes for the functions that handle system calls.
-extern uint64 sys_setpriority(void);  // Change uint64 to int
-extern uint64 sys_getpinfo(void);     // Change uint64 to int
+extern uint64 sys_setpriority(void);  
+extern uint64 sys_getpinfo(void);     
 
 
 

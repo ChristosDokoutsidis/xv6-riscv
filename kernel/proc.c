@@ -195,7 +195,7 @@ getpinfo(struct pstat *pstat)
       pstat->status[i] = p->state;
       pstat->size[i] = p->sz;
 
-      // Add other information you want to include
+      
 
       i++;
     }
